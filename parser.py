@@ -60,6 +60,11 @@ See the file script for an example of the file format
 ARG_COMMANDS = [ 'box', 'sphere', 'torus', 'circle', 'bezier', 'hermite', 'line', 'scale', 'move', 'rotate', 'save' ]
 
 def parse_file( fname, edges, polygons, csystems, screen, color ):
+    #polygon matrix is temp
+    #csystems is the stack
+    newmatrix = new_matrix()
+    ident(newmatrix)
+    csystems = [newmatrix]
 
     f = open(fname)
     lines = f.readlines()
@@ -69,6 +74,8 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
 
     c = 0
     while c < len(lines):
+        #clear the polygon matrix
+        polygons = []
         line = lines[c].strip()
         #print ':' + line + ':'
 
@@ -76,29 +83,41 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
             c+= 1
             args = lines[c].strip().split(' ')
 
+        if line == 'push':
+            nextel = csystems[len(csystems)-1]
+            csystems.append(nextel)
+        if line == 'pop':
+            del csystems[len(csystems)-1]
         if line == 'sphere':
             #print 'SPHERE\t' + str(args)
             add_sphere(polygons,
                        float(args[0]), float(args[1]), float(args[2]),
                        float(args[3]), step_3d)
+            matrix_mult(csystems[len(csystems)-1],polygons)
+            #draw to screen
 
         elif line == 'torus':
             #print 'TORUS\t' + str(args)
             add_torus(polygons,
                       float(args[0]), float(args[1]), float(args[2]),
                       float(args[3]), float(args[4]), step_3d)
+            matrix_mult(csystems[len(csystems)-1],polygons)
+
 
         elif line == 'box':
             #print 'BOX\t' + str(args)
             add_box(polygons,
                     float(args[0]), float(args[1]), float(args[2]),
                     float(args[3]), float(args[4]), float(args[5]))
+            matrix_mult(csystems[len(csystems)-1],polygons)
+
 
         elif line == 'circle':
             #print 'CIRCLE\t' + str(args)
             add_circle(edges,
                        float(args[0]), float(args[1]), float(args[2]),
                        float(args[3]), step)
+            matrix_mult(csystems[len(csystems)-1],edges)
 
         elif line == 'hermite' or line == 'bezier':
             #print 'curve\t' + line + ": " + str(args)
@@ -108,6 +127,8 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                       float(args[4]), float(args[5]),
                       float(args[6]), float(args[7]),
                       step, line)
+            matrix_mult(csystems[len(csystems)-1],edges)
+
 
         elif line == 'line':
             #print 'LINE\t' + str(args)
@@ -115,16 +136,18 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
             add_edge( edges,
                       float(args[0]), float(args[1]), float(args[2]),
                       float(args[3]), float(args[4]), float(args[5]) )
+            matrix_mult(csystems[len(csystems)-1],edges)
+
 
         elif line == 'scale':
             #print 'SCALE\t' + str(args)
             t = make_scale(float(args[0]), float(args[1]), float(args[2]))
-            matrix_mult(t, transform)
+            matrix_mult(t, csystems[len(csystems-1)])
 
         elif line == 'move':
             #print 'MOVE\t' + str(args)
             t = make_translate(float(args[0]), float(args[1]), float(args[2]))
-            matrix_mult(t, transform)
+            matrix_mult(t, csystems[len(csystems-1)])
 
         elif line == 'rotate':
             #print 'ROTATE\t' + str(args)
@@ -136,18 +159,8 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                 t = make_rotY(theta)
             else:
                 t = make_rotZ(theta)
-            matrix_mult(t, transform)
+            matrix_mult(t,  csystems[len(csystems-1)])
 
-        elif line == 'ident':
-            ident(transform)
-
-        elif line == 'apply':
-            matrix_mult( transform, edges )
-            matrix_mult( transform, polygons )
-
-        elif line == 'clear':
-            edges = []
-            polygons = []
 
         elif line == 'display' or line == 'save':
             clear_screen(screen)

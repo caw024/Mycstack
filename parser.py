@@ -80,6 +80,8 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
         #clear the polygon matrix
         temppolygons = []
         tempedges = []
+        edges = []
+        polygons = []
         line = lines[c].strip()
         #print ':' + line + ':'
 
@@ -101,6 +103,10 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
             matrix_mult(csystems[len(csystems)-1],temppolygons)
             polygons.extend(temppolygons)
             #draw to screen
+                   
+            #needs at least 3 pts to draw
+            print("polygon matrix has " + str(len(polygons)) + " elements")
+            draw_polygons(polygons, screen, color)
 
         elif line == 'torus':
             #print 'TORUS\t' + str(args)
@@ -110,7 +116,10 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                       float(args[3]), float(args[4]), step_3d)
             matrix_mult(csystems[len(csystems)-1],temppolygons)
             polygons.extend(temppolygons)
-
+       
+            #needs at least 3 pts to draw
+            print("polygon matrix has " + str(len(polygons)) + " elements")
+            draw_polygons(polygons, screen, color)
 
         elif line == 'box':
             #print 'BOX\t' + str(args)
@@ -119,6 +128,10 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                     float(args[3]), float(args[4]), float(args[5]))
             matrix_mult(csystems[len(csystems)-1],temppolygons)
             polygons.extend(temppolygons)
+                   
+            #needs at least 3 pts to draw
+            print("polygon matrix has " + str(len(polygons)) + " elements")
+            draw_polygons(polygons, screen, color)
 
 
         elif line == 'circle':
@@ -128,6 +141,8 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                        float(args[3]), step)
             matrix_mult(csystems[len(csystems)-1],tempedges)
             edges.extend(temppolygons)
+            print("edge matrix has " + str(len(edges)) + " elements")
+            draw_lines(edges, screen, color)
 
         elif line == 'hermite' or line == 'bezier':
             #print 'curve\t' + line + ": " + str(args)
@@ -139,6 +154,8 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                       step, line)
             matrix_mult(csystems[len(csystems)-1],tempedges)
             edges.extend(tempedges)
+            print("edge matrix has " + str(len(edges)) + " elements")
+            draw_lines(edges, screen, color)
 
 
 
@@ -150,17 +167,23 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                       float(args[3]), float(args[4]), float(args[5]) )
             matrix_mult(csystems[len(csystems)-1],tempedges)
             edges.extend(tempedges)
+            print("edge matrix has " + str(len(edges)) + " elements")
+            draw_lines(edges, screen, color)
 
 
         elif line == 'scale':
             #print 'SCALE\t' + str(args)
             t = make_scale(float(args[0]), float(args[1]), float(args[2]))
-            matrix_mult(t, csystems[len(csystems)-1])
+            matrix_mult(csystems[len(csystems)-1],t)
+            csystems[len(csystems)-1] = t
+
 
         elif line == 'move':
             #print 'MOVE\t' + str(args)
             t = make_translate(float(args[0]), float(args[1]), float(args[2]))
-            matrix_mult(t, csystems[len(csystems)-1])
+            matrix_mult(csystems[len(csystems)-1],t)
+            csystems[len(csystems)-1] = t
+
 
         elif line == 'rotate':
             #print 'ROTATE\t' + str(args)
@@ -172,17 +195,13 @@ def parse_file( fname, edges, polygons, csystems, screen, color ):
                 t = make_rotY(theta)
             else:
                 t = make_rotZ(theta)
-            matrix_mult(t,  csystems[len(csystems)-1])
+            matrix_mult(csystems[len(csystems)-1],t)
+            csystems[len(csystems)-1] = t
 
 
         elif line == 'display' or line == 'save':
-            clear_screen(screen)
-            #needs at least 2 pts to draw
-            print("edge matrix has " + str(len(edges)) + " elements")
-            draw_lines(edges, screen, color)
-            #needs at least 3 pts to draw
-            print("polygon matrix has " + str(len(polygons)) + " elements")
-            draw_polygons(polygons, screen, color)
+            #clear_screen(screen)
+   
 
             if line == 'display':
                 display(screen)
